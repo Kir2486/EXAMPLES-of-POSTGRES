@@ -1,0 +1,50 @@
+/*: #3 :
+Cоздать функцию которая выполняет динамический sql по частям – т.е.  
+не весь запрос целиком а партиями записей,  разобраться с циклами в pgplsql. */
+CREATE TABLE Big_table AS
+SELECT i num,md5(random()::text) txt FROM generate_series(1,1000) i;
+
+DROP TABLE Big_table;
+DROP FUNCTION get_qty1(text,text);
+
+
+CREATE OR REPLACE FUNCTION get_qty1 (tab text,col1 text, step int) RETURNS void
+AS 
+$$
+DECLARE
+	 cmd text := get_qty1.tab || ' WHERE ' ||get_qty1.col1|| '> $1 AND '||get_qty1.col1||' <= $1 + $2 ';
+	 l_dip_1 int := 0;
+	 rowcount integer :=1 ;
+	 counter_1 integer :=0;
+BEGIN   
+        <<main_loop>>
+		LOOP
+		    EXIT main_loop WHEN  rowcount = 0;
+			EXECUTE cmd USING l_dip_1,get_qty1.step;
+			GET DIAGNOSTICS rowcount = ROW_COUNT;
+			RAISE NOTICE '%', rowcount;
+			counter_1:=counter_1+rowcount;
+			RAISE NOTICE 'Уже обработано:%',counter_1;
+			l_dip_1 := l_dip_1 + get_qty1.step;
+		END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+
+SELECT get_qty1('UPDATE Big_table SET txt = ''WORKING'' ','num',100);
+
+SELECT * FROM Big_table;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

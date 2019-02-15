@@ -61,6 +61,18 @@ SELECT typname, typlen from pg_type where typtype='b';
 --Изменение настроек СУБД без перезагрузки --Changing RDMS settings without rebooting:
 SELECT pg_reload_conf();
 				
+--Задержка времени выполнения серверных процессов:
+SELECT pg_sleep(1);
+				
+SELECT oid from pg_class;
+SELECT oid::regclass from pg_class, pg_sleep(10);
+	
+SELECT oid::regclass, pg_sleep(0.1) from pg_class;/*В этом же случае функция выполнится по одному разу для каждой строки набора данных. 
+												  А именно столько раз, сколько таблиц имеется в вашей базе. */
+				
+				
+				
+				
 				
 				
 									   

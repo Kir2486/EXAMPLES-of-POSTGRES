@@ -1,0 +1,17 @@
+--Pg_dump for backup etc....
+--: https://postgrespro.ru/docs/postgresql/10/app-pgdump
+
+
+--: And PG_RESTORE to restore the DB:
+--: https://postgrespro.ru/docs/postgresql/10/app-pgrestore
+
+--: And also pg_dumpall
+
+--How to transfer database: https://shra.ru/2017/01/perenos-bazy-postgresql-s-servera-na-server/
+
+
+
+
+
+
+

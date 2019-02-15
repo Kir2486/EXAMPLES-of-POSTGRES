@@ -1,0 +1,82 @@
+--:3.6 --:https://postgrespro.ru/docs/postgresql/11/tutorial-inheritance
+--#1
+CREATE TABLE capitals (
+  name       text,
+  population real,
+  altitude   int,    -- (высота в футах)
+  state      char(2)
+);
+
+CREATE TABLE non_capitals (
+  name       text,
+  population real,
+  altitude   int     -- (высота в футах)
+);
+
+drop table  cities cascade; -- для удаления зависимых таблиц 
+
+CREATE VIEW cities AS
+  SELECT name, population, altitude FROM capitals
+    UNION
+  SELECT name, population, altitude FROM non_capitals;
+  
+SELECT * FROM CITIES;
+DROP VIEW CITIES;
+DROP TABLE capitals;
+DROP TABLE non_capitals;
+
+--:#2 BETTER PRACTICE !!! QUESTION!!!
+
+CREATE TABLE cities (
+  name       text,
+  population real,
+  altitude   int     -- (высота в футах)
+);
+
+CREATE TABLE capitals (
+  state      char(2)
+) INHERITS (cities);
+
+DROP TABLE CAPITALS;
+
+INSERT INTO cities VALUES ('Las Vegas',2174,5000)
+INSERT INTO cities VALUES ('Mariposa',3000,51000);
+INSERT INTO cities VALUES ('Madi''son',5000,52000);
+
+SELECT * FROM capitals;
+SELECT * FROM CITIES;
+
+
+SELECT name, altitude
+    FROM ONLY cities
+    WHERE altitude > 500;
+
+----------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

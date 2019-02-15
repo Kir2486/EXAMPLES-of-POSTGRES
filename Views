@@ -1,0 +1,126 @@
+-- Views
+--:https://postgrespro.ru/docs/postgresql/11/sql-createview
+CREATE TABLE comedies(id integer, name text, kind text);
+
+INSERT INTO comedies VALUES (1, 'WAR', 'Comedy');
+INSERT INTO comedies VALUES (1, 'Kop', 'Triller');
+INSERT INTO comedies VALUES (1, 'Domino', 'Melodrama');
+
+INSERT INTO comedies VALUES (2, 'Kop123', 'Comedy');
+INSERT INTO comedies VALUES (2, 'Domino111', 'Comedy');
+
+SELECT * FROM comedies;
+
+--!!!: Adding a field : https://postgrespro.ru/docs/postgresql/9.6/ddl-alter#ddl-alter-adding-a-column
+ALTER TABLE comedies ADD COLUMN classification text;
+
+--Modification of data: https://postgrespro.ru/docs/postgrespro/9.5/dml-update
+UPDATE comedies SET classification = 'U' WHERE name = 'Domino';
+UPDATE comedies SET classification = '18+' WHERE name = 'Kop';
+UPDATE comedies SET classification = '6+' WHERE name = 'WAR';
+UPDATE comedies SET classification = '18+' WHERE name = 'Kop123';
+UPDATE comedies SET classification = '6+' WHERE name = 'Domino111';
+
+--CREATE VIEW
+CREATE VIEW Best_comedies AS
+    SELECT *
+    FROM comedies
+    WHERE kind = 'Comedy';
+	
+DROP VIEW Best_comedies;
+
+SELECT * FROM Best_comedies;
+--
+CREATE VIEW universal_comedies AS
+    SELECT *
+    	FROM Best_comedies
+     WHERE classification = '18+'
+    WITH LOCAL CHECK OPTION; -- We can't insert rows with classification equals '18+'
+--
+INSERT INTO universal_comedies VALUES(3,'kopapp','Comedy','16+');--Its't avaliable But:
+INSERT INTO universal_comedies VALUES(3,'kopapp','Comedy','18+');--AND ALSO:??? These rows will be in the 'comedies' table
+INSERT INTO universal_comedies VALUES(4,'kopapap','????','18+');
+
+DROP VIEW universal_comedies;
+
+SELECT * FROM universal_comedies;
+-------------------------------------------------------------------------------
+--USING 'CASCADED CHECK OPTION':
+CREATE VIEW pg_comedies AS
+    SELECT *
+    FROM Best_comedies
+    WHERE classification = '18+'
+    WITH CASCADED CHECK OPTION;
+
+SELECT * FROM pg_comedies;
+DROP VIEW pg_comedies;
+
+INSERT INTO pg_comedies VALUES(3,'Test_Cascade','Comedy','18+');--It's OK, BUT:
+INSERT INTO pg_comedies VALUES(3,'Test_Cascade','????','18+');
+
+--------------------------------------------------------------------------------
+--:Recursive view:
+CREATE RECURSIVE VIEW public.nums_1_100 (n) AS
+    VALUES (1)
+UNION ALL
+    SELECT n+1 FROM nums_1_100 WHERE n < 100;
+
+SELECT * FROM public.nums_1_100;
+
+---------------------------------------------------------------------------------
+--Change View : https://postgrespro.ru/docs/postgresql/11/sql-alterview
+ALTER VIEW public.nums_1_100 RENAME TO bar;
+SELECT * FROM bar;
+
+---------------------------------------------------------------------------------
+--: CREATE MATERIALIZED VIEW  : https://postgrespro.ru/docs/postgresql/11/sql-creatematerializedview
+
+--: REFRESH MATERIALIZED VIEW [ CONCURRENTLY ] имя
+--  [ WITH [ NO ] DATA ]
+CREATE MATERIALIZED VIEW TEST_MATERIAL
+	AS
+		SELECT * 
+		FROM comedies
+		WHERE kind = 'Comedy';
+		
+REFRESH MATERIALIZED VIEW TEST_MATERIAL;
+
+INSERT INTO comedies VALUES (2, 'TEST_MAT_REFRESH', 'Comedy','1333+');
+SELECT * FROM comedies;
+SELECT * FROM TEST_MATERIAL;
+-------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+	
+
+
+
+
+
+
+
+
+

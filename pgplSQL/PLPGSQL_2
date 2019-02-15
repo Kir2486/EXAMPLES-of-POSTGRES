@@ -1,0 +1,16 @@
+--: https://edu.postgrespro.ru/dev1/dev1_12_plpgsql_queries.pdf
+--: https://postgrespro.ru/docs/postgrespro/9.6/plpgsql-control-structures.html#plpgsql-statements-returning
+-- Diagnostic of command: GET DIAGNOSTICS, FOUND variable.
+--: Table functions: (RETURNS OF): RETURN QUERY query
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,137 @@
+--INDEXES
+--: https://habr.com/ru/company/postgrespro/blog/330544/
+
+--https://habr.com/ru/company/postgrespro/blog/326096/
+
+--: About analyze https://postgrespro.ru/docs/postgresql/9.6/sql-analyze
+
+create table t(a integer, b text, c boolean);
+
+SELECT * FROM t;
+
+insert into t(a,b,c)
+	select s.id, chr((32+random()*94)::integer), random() < 0.01
+  from generate_series(1,100000) as s(id)
+  order by random();
+
+create index on t(a);
+
+analyze t;
+
+--
+explain (costs off) select * from t where a = 1;
+
+--------------------------------------------------------------------------
+
+--BITMAP SCAN
+
+explain (costs off) select * from t where a <= 100;
+
+--
+create index on t(b);
+
+analyze t;
+explain (costs off) select * from t where a <= 100 and b = 'a';
+
+--
+select attname, correlation from pg_stats where tablename = 't';
+
+---------------------------------------------------------------------------------
+--:Seq SCAN on t
+
+explain (costs off) select * from t where a <= 40000;
+
+
+---------------------------------------------------------------------------------
+--: Index Only Scan
+vacuum t;
+
+explain (costs off) select a from t where a < 100;
+
+explain (analyze, costs off) select a from t where a < 100;
+
+---------------------------------------------------------------------------------
+--:NULL might be indexed
+
+--:Indexes of several fields
+
+create index on t(a,b);
+analyze t;
+
+explain (costs off) select * from t where a <= 100 and b = 'a';
+
+explain (costs off) select * from t where a <= 100;
+
+
+------------------------------------------------------------------------------
+--: Expression indexes
+explain (costs off) select * from t where lower(b) = 'a';
+
+--Using Expression indexes:
+create index on t(lower(b));
+analyze t;
+explain (costs off) select * from t where lower(b) = 'a';
+
+select * from pg_stats where tablename = 't_lower_idx';
+
+-------------------------------------------------------------------------------
+--:Partial indexes
+
+create index on t(c) where c;
+
+analyze t;
+
+select relpages, relname from pg_class where relname='t_c_idx';
+
+----------------------------------------------------------------------------
+--: SORTING (only for Btree)
+
+set enable_indexscan=off;
+explain (costs off) select * from t order by a;
+
+--OR
+set enable_indexscan=on;
+explain (costs off) select * from t order by a;
+
+
+
+------------------------------------------------------------------------------
+-- Paralell index creation 
+
+create index concurrently on t(a);
+
+select indexrelid::regclass index_name, indrelid::regclass table_name from pg_index where not indisvalid;
+
+
+----------------------------------------------------------------------------
+-- https://habr.com/ru/company/postgrespro/blog/326106/----------------------
+--:Properties
+--:HASH
+--Btree--: https://habr.com/ru/company/postgrespro/blog/330544/
+						
+--:GiST:  https://habr.com/ru/company/postgrespro/blog/333878/
+--:SP-GIST	:https://habr.com/ru/company/postgrespro/blog/337502/		
+--GIN : https://habr.com/ru/company/postgrespro/blog/340978/
+
+						
+						
+						
+						
+						
+						
+						
+
+						
+						
+
+
+
+
+
+
+
+
+
+
+
+

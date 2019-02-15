@@ -1,0 +1,329 @@
+/*
+Функции – как пример создать функцию которая выполняет динамический sql по частям 
+– т.е.  не весь запрос целиком а партиями записей,  разобраться с циклами в pgplsql. Табличные функции – создать пример.
+*/
+--:About function: https://edu.postgrespro.ru/dev1/dev1_09_sql_func.pdf
+/*
+CREATE OR REPLACE FUNCTION MAIN_TEST_1 () --:ALTER/ DROP \df \ef
+	RETURNS int --: type of returning 
+	AS 
+	$$ 
+	BODY;
+	$$
+	LANGUAGE SQL;
+*/
+
+--:1
+DROP TABLE t;
+CREATE TABLE t(a float);
+
+CREATE FUNCTION fill() RETURNS void AS $$
+INSERT INTO t
+    SELECT random() FROM generate_series(1,3);
+$$ LANGUAGE SQL;
+
+--Call function:
+SELECT fill();
+SELECT * FROM t;
+
+
+--Adding returning value: But before we must delete this function:
+DROP FUNCTION fill();
+
+CREATE OR REPLACE FUNCTION fill() RETURNS bigint AS $$
+INSERT INTO t
+    SELECT random() FROM generate_series(1,3);
+SELECT count(*) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill();
+
+
+--And if we want the table to be pre-cleaned?
+CREATE OR REPLACE FUNCTION fill() RETURNS bigint AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,3);
+SELECT count(*) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill();
+
+--: Not all SQL commands can be used in a function.
+--BANNED : (BEGIN, COMMIT, ROLLBACK) and non-transactional like VACCUM, CREATE INDEX:
+CREATE FUNCTION do_commit() RETURNS void AS $$
+COMMIT;
+$$ LANGUAGE SQL;
+
+SELECT do_commit();
+
+DROP FUNCTION do_commit();
+-----------------------------------------------------------------------------------------
+--: ADDING input parameters
+DROP FUNCTION fill();
+
+CREATE FUNCTION fill(nrows integer) RETURNS bigint AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,nrows);
+SELECT count(*) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill(5);
+SELECT fill(nrows => 10);
+
+--Or such:
+DROP FUNCTION fill(integer);
+
+CREATE FUNCTION fill(integer) RETURNS bigint AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,$1);
+SELECT count(*) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill(50);
+
+
+--------------------------------------------------------------------------
+--: USING output parameters WITHOUT 'RETURNS'
+DROP FUNCTION fill(integer);
+
+CREATE FUNCTION fill(nrows IN integer, result OUT bigint) AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,nrows);
+SELECT count(*) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill(50);
+
+
+--: OR USING output parameters and 'RETURNS'
+CREATE OR REPLACE FUNCTION fill(nrows IN integer, result OUT bigint)
+RETURNS bigint
+AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,nrows);
+SELECT count(*) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill(50);
+
+
+--: Or using INOUT parameter with cast type: 
+DROP FUNCTION fill(integer);
+
+CREATE FUNCTION fill(nrows INOUT integer) AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,nrows);
+SELECT count(*)::integer FROM t;
+$$ LANGUAGE SQL;
+
+
+--: Several out parameters: 
+CREATE FUNCTION fill(nrows INOUT integer, average OUT float) AS $$
+TRUNCATE t;
+INSERT INTO t
+    SELECT random() FROM generate_series(1,nrows);
+SELECT count(*)::integer, avg(a) FROM t;
+$$ LANGUAGE SQL;
+
+SELECT fill(3);
+
+
+------: Overloaded functions:
+CREATE FUNCTION maximum(a integer, b integer) RETURNS integer AS $$
+SELECT CASE WHEN a > b THEN a ELSE b END;
+$$ LANGUAGE SQL;
+
+SELECT maximum (100,10);
+
+
+--: And so using overloading we can make function for 3 numbers: 
+CREATE FUNCTION maximum(a integer, b integer, c integer) RETURNS integer AS $$
+SELECT CASE WHEN a > b THEN maximum(a,c) ELSE maximum(b,c) END;
+
+--: adding opportunity using real numbers:
+CREATE FUNCTION maximum(a real, b real) RETURNS real AS $$
+    SELECT CASE WHEN a > b THEN a ELSE b END;
+$$ LANGUAGE SQL;
+
+
+----------------------------------------------------------------------------------
+--: Polymorphic functions: USE 'anyelement' type:
+DROP FUNCTION maximum(integer, integer);
+DROP FUNCTION maximum(integer, integer, integer);
+DROP FUNCTION maximum(real, real);
+
+
+CREATE FUNCTION maximum(a anyelement, b anyelement) RETURNS anyelement AS $$
+    SELECT CASE WHEN a > b THEN a ELSE b END;
+$$ LANGUAGE SQL;
+
+SELECT maximum('A','B'); -- It doesn't work but we can use cast type:
+SELECT maximum('A'::text,'B'::text);
+
+SELECT maximum(now(), now() + interval '1 day');
+
+
+--: It's important that both type of parameters was equal(matched):
+SELECT maximum(1,'A');
+
+
+---: USING DEFAULT PARAMETERS:
+CREATE FUNCTION maximum(a anyelement, b anyelement, c anyelement default null)
+RETURNS anyelement AS $$
+    SELECT CASE
+               WHEN c IS NULL THEN
+                   x
+               ELSE
+                   CASE WHEN x > c THEN x ELSE c END
+           END
+    FROM (
+        SELECT CASE WHEN a > b THEN a ELSE b END
+    ) max2(x);
+$$ LANGUAGE SQL;
+
+SELECT maximum(10,20,30); -- It's OK.
+
+SELECT maximum(10,20);-- Now it's doesn't work because system can't decide what we want: function with 2 or 3 parametersl
+
+DROP FUNCTION maximum(anyelement, anyelement);--Now ir will be ok
+SELECT maximum(10,20), maximum(10,20,30);
+
+
+--There are three categories of changing function: Volatile, Stable, Immutable.
+DROP TABLE t;
+CREATE TABLE t(n integer);
+
+SELECT * FROM t;
+
+INSERT INTO t VALUES (1),(2),(3);
+
+CREATE FUNCTION cnt() RETURNS bigint AS $$
+	SELECT count(*) FROM t;
+$$ VOLATILE LANGUAGE SQL
+
+BEGIN ISOLATION LEVEL READ COMMITTED;
+
+SELECT (SELECT count(*) FROM t), cnt(), pg_sleep(1) FROM generate_series(1,4);
+
+
+SELECT * FROM pg_roles;
+SET ROLE postgres;
+SET ROLE kirill;
+SELECT current_user;
+
+INSERT INTO t VALUES (4);
+GRANT ALL ON t TO kirill;
+SELECT * FROM t;
+
+end;
+ROLLBACK;
+------------
+
+ALTER FUNCTION cnt() STABLE;
+TRUNCATE t;
+BEGIN ISOLATION LEVEL READ COMMITTED;
+
+SELECT (SELECT count(*) FROM t), cnt(), pg_sleep(1) FROM generate_series(1,4);
+
+INSERT INTO t VALUES (4);
+
+SELECT * from t;
+-------------------------------------------------------------------------------
+
+CREATE FUNCTION rnd() RETURNS float AS $$
+SELECT random();
+$$ VOLATILE LANGUAGE SQL;
+
+EXPLAIN(COSTS ON) SELECT * FROM generate_series(1,10) WHERE rnd() > 0.5;
+
+SELECT * FROM generate_series(1,10) WHERE rnd() > 0.5;
+
+--:
+ALTER FUNCTION rnd() STABLE;
+EXPLAIN(COSTS ON) SELECT * FROM generate_series(1,10) WHERE rnd() > 0.5;
+
+--:
+ALTER FUNCTION rnd() IMMUTABLE;
+
+EXPLAIN(COSTS ON) SELECT * FROM generate_series(1,10) WHERE rnd() > 0.5;
+
+----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION MAIN_TEST_1 (a int) --:ALTER/ DROP \df \ef
+	RETURNS int --: type of returning 
+	AS 
+	$$ BODY
+	$$
+	LANGUAGE SQL;
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+
+

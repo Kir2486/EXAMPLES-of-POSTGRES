@@ -1,0 +1,53 @@
+/*Interesting task about: 
+	There is a table with a key sequance. 
+	Some rows have been removed from the table.
+		The challenge is that : You should use only select statement to find all missing lines. Let's Go!
+*/
+
+CREATE TABLE Main_table AS                
+	SELECT s FROM generate_series(1,100000) as s; --: https://www.postgresql.org/docs/9.1/functions-srf.html
+--: https://www.postgresql.org/docs/8.1/sql-createtableas.html
+
+SELECT * FROM Main_table;
+DROP TABLE Main_table;
+
+
+--DELETE FROM TABLE --: https://postgrespro.ru/docs/postgresql/10/sql-delete
+DELETE FROM Main_table
+	WHERE s in (select i*2 + ((random()*10)::integer) from generate_series(1,100000) as i);
+---------------------------------END PREPARE THE TABLE-------------------------------------
+
+--Let's do this strange challenge:
+--: https://postgrespro.ru/docs/postgrespro/10/functions-window																  
+
+SELECT M1.s 
+	FROM (SELECT s FROM generate_series(1,(select max(s) from Main_table)) as s) M1 
+			LEFT OUTER JOIN	
+				(SELECT s from Main_table) M2 
+					ON M1.s = M2.s
+	WHERE M2.s IS NULL; 
+																																								   
+--CORRECT!!!
+
+SELECT * 
+	FROM (SELECT s FROM generate_series((select min(s) from Main_table),(select max(s) from Main_table)) as s
+EXCEPT 
+	SELECT s from Main_table
+		 ) m
+ORDER BY s;
+										
+--Check size of a tables -- : PG_PRETTY_SIZE ---: https://stackoverflow.com/questions/18907047/postgres-db-size-command
+SELECT pg_size_pretty(pg_relation_size('Main_table'));
+								 
+															 
+															 
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,34 @@
+-- 4.2.9
+--: https://postgrespro.ru/docs/postgresql/11/sql-expressions
+-- There are two ortions. For example 
+select CAST ( 13 AS text );
+select 13::real;
+-- AND ALSO We can use like this, But it doesn't work ever
+SELECT text(123);
+
+--:ARRAYS
+SELECT CAST(ARRAY[1,2,3+4] AS text);
+--two-dimensional arrays
+SELECT ARRAY[[1,2,3+4],[1,2,3]];
+
+--: Others
+CREATE TABLE arr(f1 int[], f2 int[]);
+
+INSERT INTO arr VALUES (ARRAY[[1,2],[3,4]], ARRAY[[5,6],[7,8]]);
+
+SELECT ARRAY[f1, f2, '{{9,10},{11,12}}'::int[]] FROM arr;
+SELECT 
+
+						
+
+
+
+
+
+
+
+
+
+
+
+

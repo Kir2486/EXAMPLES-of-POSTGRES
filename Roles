@@ -1,0 +1,34 @@
+--ROLES in DATABASE 
+--: https://postgrespro.ru/docs/postgresql/9.6/user-manag
+
+CREATE ROLE TESTER LOGIN;
+
+DROP ROLE TESTER;
+
+SELECT * FROM pg_roles;-- or use '\du'
+
+--: + AS SUPERUSER
+CREATE ROLE TESTER2000 SUPERUSER;
+DROP ROLE TESTER2000;
+
+
+--: GROUP ROLE
+CREATE ROLE TESTER2000 LOGIN; --Group role
+CREATE ROLE TESTER;-- simple role
+
+GRANT TESTER2000 TO TESTER;
+
+--USE 'SET ROLE NAME_OF_RALE' to use its privilegies.
+SET ROLE TESTER2000;
+
+--To drop role we must reassign owned to another role:
+REASSIGN OWNED BY doomed_role TO successor_role;
+DROP OWNED BY doomed_role;
+-- повторить предыдущие команды для каждой базы в кластере
+DROP ROLE doomed_role;
+
+
+
+
+
+

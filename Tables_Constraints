@@ -1,0 +1,256 @@
+--Tables and constraints: https://postgrespro.ru/docs/postgresql/10/ddl-constraints#DDL-CONSTRAINTS-CHECK-CONSTRAINTS.
+CREATE TABLE products (
+    product_no integer,
+    name text,
+    price numeric CHECK (price > 0)
+);
+
+INSERT INTO products VALUES (1,'TEST_1',1);
+INSERT INTO products VALUES (1,'TEST_2',-1);
+
+
+--Or we can create constraint with name.
+CREATE TABLE products_cons (
+    product_no integer,
+    name text,
+    price numeric CONSTRAINT positive_price CHECK (price > 0)
+);
+
+INSERT INTO products_cons VALUES (1,'TEST_1',1);
+INSERT INTO products_cons VALUES (1,'TEST_2',-1);
+
+
+--: 
+CREATE TABLE products_2 (
+    product_no integer,
+    name text,
+    price numeric CHECK (price > 0),
+    discounted_price numeric CHECK (discounted_price > 0),
+    CHECK (price > discounted_price)
+);
+
+
+--Or:
+CREATE TABLE products_3 (
+    product_no integer,
+    name text,
+    price numeric CHECK (price > 0),
+    discounted_price numeric,
+    CONSTRAINT valid_discount CHECK (discounted_price > 0 AND price > discounted_price)
+);
+SELECT * FROM products_3;
+INSERT INTO products_3 VALUES (1, 'Test_1', 1, 3); -- It Doesn't work.
+
+
+--NOT NULL CKECK:
+CREATE TABLE products_null (
+    product_no integer NOT NULL CHECK (product_no > 100 and product_no <150),
+    name text NOT NULL ,
+    price numeric
+);
+
+INSERT INTO products_null VALUES (101, 'Test_1', 1);--OK
+
+
+--:UNIQUE CONSTRAINTS
+CREATE TABLE products_U (
+    product_no integer UNIQUE,
+    name text,
+    price numeric
+);
+INSERT INTO products_U VALUES (101, 'Test_1', 1);--OK
+INSERT INTO products_U VALUES (101, 'Test_1', 1);--Not, because there is a unique constraint in the product_no column
+
+--: OR: When combination of listed column values should be unique in the table 
+CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    UNIQUE (a, c)
+);
+--:При добавлении ограничения уникальности будет автоматически создан уникальный индекс-B-дерево для столбца или группы столбцов, перечисленных в ограничении. 
+
+--PRIMARY KEYS
+CREATE TABLE products (
+    product_no integer UNIQUE NOT NULL,
+    name text,
+    price numeric
+);
+-- It is equal this:  
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+--:+
+CREATE TABLE example (
+    a integer,
+    b integer,
+    c integer,
+    PRIMARY KEY (a, c)
+);
+
+--Foreign KEYS:to make a referential integrity
+DROP TABLE products;
+
+CREATE TABLE products (
+    product_no integer PRIMARY KEY,
+    name text,
+    price numeric
+);
+
+
+CREATE TABLE orders (
+    order_id integer PRIMARY KEY,
+    product_no integer REFERENCES products (product_no),
+    quantity integer
+);
+
+INSERT INTO orders VALUES (1,1,30); --OK
+INSERT INTO orders VALUES (3,2,30); --NO!
+
+SELECT * FROM orders;
+SELECT * FROM products;
+
+--ALSO:
+CREATE TABLE order_items (
+    product_no integer REFERENCES products ON DELETE RESTRICT,
+    order_id integer REFERENCES orders ON DELETE CASCADE,
+    quantity integer,
+    PRIMARY KEY (product_no, order_id)
+);
+SELECT * FROM order_items;
+
+INSERT INTO order_items VALUES (1,1,30);
+
+DELETE FROM products WHERE price = 1;-- we can't do it because there is constraint of foreign keys;
+
+DELETE FROM orders WHERE order_id = 1;--ok and a row are related on 1st orders had deleted.
+
+--: Changing a table: ADD\DROP COLUMN
+SELECT * FROM products;
+
+ALTER TABLE products ADD COLUMN second_name text; --OR:
+ALTER TABLE products ADD COLUMN description text CHECK (description <> '');
+ALTER TABLE products DROP COLUMN description;
+
+--:ADD a constraint:
+ALTER TABLE products ADD CHECK (name <> '');
+ALTER TABLE products ADD CONSTRAINT some_name UNIQUE (product_no);
+ALTER TABLE products DROP some_name;
+ALTER TABLE products ADD FOREIGN KEY (product_group_id) REFERENCES product_groups;
+--NOT NULL:
+ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
+
+--DROP CONSTRAINTS: (\d name_of_table)
+ALTER TABLE products ALTER COLUMN product_no SET NOT NULL;
+ALTER TABLE products ALTER COLUMN product_no DROP NOT NULL;
+
+
+--Change DEFAULT:-----?
+ALTER TABLE products ALTER COLUMN price SET DEFAULT 7.77;
+--And We'll see it after insert:
+INSERT INTO products VALUES (2,'TEST-2',30,'asd');
+INSERT INTO products(product_no, name, second_name) VALUES(21,'TEST-2','asd');
+--DROP:
+ALTER TABLE products ALTER COLUMN price DROP DEFAULT;
+
+
+--CAST type of column:
+ALTER TABLE products ALTER COLUMN price TYPE numeric(10,2);
+
+--RENAME COLUMN:
+ALTER TABLE products RENAME COLUMN product_no TO product_number;
+
+--RENAME TABLE:
+ALTER TABLE products RENAME TO items;
+
+DROP TABLE products;
+
+SELECT tablename 
+	FROM pg_tables
+	WHERE tablename LIKE 'produ%';
+
+
+--PERMISSIONS OF TABLES: https://postgrespro.ru/docs/postgresql/10/ddl-rowsecurity  --Row Level Security
+DROP TABLE accounts;
+CREATE TABLE accounts (manager text, company text, contact_email text);
+
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+
+INSERT INTO accounts VALUES ('joni','EPAM','Joni@joni.com');
+
+CREATE POLICY account_managers ON accounts
+	FOR SELECT 
+    USING (current_user = manager);
+
+
+DROP POLICY account_managers on accounts;
+
+CREATE ROLE MANAGERS LOGIN;--group role
+DROP ROLE Joni;
+CREATE ROLE Joni INHERIT;
+GRANT MANAGERS to Joni WITH ADMIN OPTION;
+GRANT postgres to MANAGERS;
+
+SELECT current_user; --it let see current_user;
+
+REVOKE postgres FROM Joni;
+REVOKE MANAGERS FROM JONi;
+
+SELECT * FROM pg_roles;
+
+SET ROLE MANAGERS;
+SET ROLE postgres;
+SET ROLE Joni;
+
+SELECT * FROM accounts; --Whu doesn't work???
+
+DROP ROLE MANAGERS;
+DROP ROLE Joni;
+
+REASSIGN OWNED BY MANAGERS TO postgres;
+DROP OWNED BY MANAGERS;
+
+INSERT INTO accounts VALUES ('Mark','EPAM','MARK@joni.com');
+
+
+
+
+
+
+
+	
+	
+
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,182 @@
+--PGPLSQL: https://edu.postgrespro.ru/dev1/dev1_11_plpgsql_introduction.pdf
+
+SELECT * FROM pg_language;
+
+SELECT * FROM pg_proc;
+
+DO $$
+DECLARE 
+	var1 text;
+	var2 text := 'World';
+BEGIN
+	var1 := 'Hello';
+	RAISE NOTICE '%, %!', var1,var2;
+END;
+$$;
+
+
+---:
+DO $$
+<<outer_block>>
+DECLARE
+    var text := 'Hello';
+BEGIN
+    <<inner_block>>
+    DECLARE
+        var text := 'World';
+    BEGIN
+        RAISE NOTICE '%, %!', outer_block.var, inner_block.var;
+        RAISE NOTICE 'Без метки используется внутренняя переменная: %', var;
+    END inner_block;
+END outer_block;
+$$;
+
+-------------------------------------------------------------------------------
+CREATE FUNCTION fmt_in (IN phone text) RETURNS text
+AS $$
+BEGIN
+    IF phone ~ '^[0-9]*$' AND length(phone) = 10 THEN
+        RETURN '+7(' || substr(phone,1,3) || ')' 
+                     || substr(phone,4,3) || '-'
+                     || substr(phone,7,2) || '-'
+                     || substr(phone,9);
+    ELSE
+        RETURN NULL;
+    END IF;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+--: With OUT parameter:
+CREATE FUNCTION fmt_out (IN phone text, OUT retval text)
+AS $$
+BEGIN
+    retval := fmt_in(phone);
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+--:Using INOUT:
+CREATE FUNCTION fmt_inout (INOUT phone text)
+AS $$
+BEGIN
+    phone := fmt_out(phone); -- вызов функции с параметром OUT
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+--:CHECK
+SELECT fmt_in('8122128506'), 
+          fmt_out('8122128506'), 
+          fmt_inout('8122128506');
+
+-------------------------------------------------------------------------------
+
+CREATE FUNCTION fmt_out_2 (IN phone text, OUT code text, OUT num text)
+-- RETURNS можно не писать, предполагается RETURNS record
+AS $$
+BEGIN
+    IF phone ~ '^[0-9]*$' AND length(phone) = 10 THEN
+        code := substr(phone,1,3);
+        num  := substr(phone,4);
+    ELSE
+        code := NULL;
+        num  := NULL;
+    END IF;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE;
+
+
+------------------------------------------------------------------------------
+--: CASE
+ DO $$
+DECLARE
+    code text := (fmt_out_2('8122128506')).code;
+BEGIN
+    CASE code
+    WHEN '495', '499' THEN
+        RAISE NOTICE '% - Москва', code;
+    WHEN '812' THEN
+        RAISE NOTICE '% - Санкт-Петербург', code;
+    WHEN '384' THEN
+        RAISE NOTICE '% - Кемеровская область', code;
+    ELSE
+        RAISE NOTICE '% - Прочие', code;
+    END CASE;
+END;
+$$;
+							
+-----------------------------------------------------------------------
+--:LOOPS
+CREATE FUNCTION reverse_for (line text) RETURNS text
+AS $$
+DECLARE
+    line_length CONSTANT int := length(line);
+    retval text := '';
+BEGIN
+    FOR i IN 1 .. line_length 
+		LOOP
+			retval := substr(line, i,1) || retval;
+		END LOOP;
+    RETURN retval;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+							
+SELECT reverse_for('123');
+							
+--: USING WHILE:
+CREATE FUNCTION reverse_while (line text) RETURNS text
+AS $$
+DECLARE
+    line_length CONSTANT int := length(line);
+    i int := 1;
+    retval text := '';
+BEGIN
+    WHILE i <= line_length 
+		LOOP
+			retval := substr(line, i,1) || retval;
+			i := i + 1;
+		END LOOP;
+    RETURN retval;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+							
+--: JUST LOOP:
+CREATE FUNCTION reverse_loop (line text) RETURNS text
+AS $$
+DECLARE
+    line_length CONSTANT int := length(reverse_loop.line);
+    i int := 1;
+    retval text := '';
+BEGIN
+    <<main_loop>>
+    LOOP
+        EXIT main_loop WHEN i > line_length;
+        retval := substr(reverse_loop.line, i,1) || retval;
+        i := i + 1;
+    END LOOP;
+    RETURN retval;
+END;
+$$ LANGUAGE plpgsql IMMUTABLE STRICT;
+							
+
+--: CHECK:
+SELECT reverse_for('абырвалГ') as "for",
+         -- reverse_rof('Главрыба') as "reverse for",
+          reverse_while('абырвалГ') as "while",
+          reverse_loop('Главрыба') as "loop";
+
+SELECT reverse('123');
+							
+
+							
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,16 @@
+--About values: https://postgrespro.ru/docs/postgrespro/9.5/queries-values
+
+VALUES (1, 'one'), (2, 'two'), (3, 'three'); -- It's like table with 2 column ant 3 rows.
+
+
+--Or using name for column: 
+SELECT * FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) AS t (num,letter);
+
+-------------------------------------------------------------------------------------------
+--USGIN LIMIT AND OFFSET										   
+CREATE TEMP TABLE TEST_LIMIT AS 
+  SELECT i
+  FROM generate_series(1, 10) AS i;
+
+SELECT * FROM TEST_LIMIT order by i
+		 OFFSET 5 LIMIT 10 ;

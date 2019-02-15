@@ -1,0 +1,122 @@
+--Recursive: https://habr.com/ru/post/269497/
+--: https://postgrespro.ru/docs/postgrespro/9.5/queries-with
+
+WITH RECURSIVE t(n) AS (
+    VALUES (1)
+  UNION ALL
+    SELECT n+1 FROM t WHERE n < 100
+)
+
+SELECT sum(n) FROM t;
+
+--Изменение данных в WITH
+WITH moved_rows AS (
+    DELETE FROM products
+    WHERE
+        "date" >= '2010-10-01' AND
+        "date" < '2010-11-01'
+    RETURNING *
+)
+INSERT INTO products_log
+SELECT * FROM moved_rows;
+
+
+--Differences---------------------------------------------------
+WITH t AS (
+    UPDATE products SET price = price * 1.05
+    RETURNING *
+)
+SELECT * FROM products;
+
+--And:
+WITH t AS (
+    UPDATE products SET price = price * 1.05
+    RETURNING *
+)
+SELECT * FROM t;
+---------------------------------------------------------------------
+--:RECURSIVE
+WITH RECURSIVE r AS (
+    -- стартовая часть рекурсии (т.н. "anchor")
+    SELECT 
+        1 AS i, 
+        1 AS factorial
+    
+    UNION 
+  
+    -- рекурсивная часть 
+    SELECT 
+        i+1 AS i, 
+        factorial * (i+1) as factorial 
+    FROM r
+    WHERE i < 10
+)
+SELECT * FROM r;
+
+
+------------------------------------------------
+CREATE TABLE geo (
+    id int not null primary key, 
+    parent_id int references geo(id),  
+    name varchar(1000)
+);
+
+INSERT INTO geo 
+(id, parent_id, name) 
+VALUES 
+(1, null, 'Планета Земля'),
+(2, 1, 'Континент Евразия'),
+(3, 1, 'Континент Северная Америка'),
+(4, 2, 'Европа'),
+(5, 4, 'Россия'),
+(6, 4, 'Германия'),
+(7, 5, 'Москва'),
+(8, 5, 'Санкт-Петербург'),
+(9, 6, 'Берлин');
+
+--:
+WITH RECURSIVE r AS (
+   SELECT id, parent_id, name
+   FROM geo
+   WHERE parent_id = 4
+
+   UNION
+
+   SELECT geo.id, geo.parent_id, geo.name
+   FROM geo
+      JOIN r
+          ON geo.parent_id = r.id
+)
+
+SELECT * FROM r;
+
+
+--: Или выводим все с самой Европой
+WITH RECURSIVE r AS (
+   SELECT id, parent_id, name, 1 AS level --Level для позиции рекурсии
+   FROM geo
+   WHERE id = 4
+
+   UNION ALL
+
+   SELECT geo.id, geo.parent_id, geo.name, r.level + 1 AS level
+   FROM geo
+      JOIN r
+          ON geo.parent_id = r.id
+)
+
+SELECT * FROM r;
+
+
+
+
+
+
+
+
+
+
+
+
+
+

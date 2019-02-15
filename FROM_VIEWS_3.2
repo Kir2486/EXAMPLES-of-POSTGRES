@@ -1,0 +1,74 @@
+--:VIEWS
+CREATE VIEW myview AS
+    SELECT city, temp_lo, temp_hi, prcp, date, location
+        FROM weather, cities
+        WHERE city = name;
+
+SELECT * FROM myview;
+DROP VIEW MYVIEW;
+
+--Referential data integrity---------------
+DROP TABLE CITIES;
+DROP TABLE WEATHER;
+
+CREATE TABLE cities (
+        city     varchar(80) primary key,
+        location point
+);
+
+
+
+CREATE TABLE weather (
+        city      varchar(80) references cities(city),
+        temp_lo   int,
+        temp_hi   int,
+        prcp      real,
+        date      date
+);
+--CHECK:
+INSERT INTO weather VALUES ('Berkeley', 45, 53, 0.0, '1994-11-28');
+
+-------------------------------------------: TRANSACTIONS -------------------------------------------------------
+--: Create table to use
+CREATE TABLE accounts  (
+        name     varchar(80) primary key,
+        balance real
+);
+
+INSERT INTO accounts VALUES ('Alice', 1500.0);
+INSERT INTO accounts VALUES ('Bob', 15500.40);
+INSERT INTO accounts VALUES ('Wally', 10000.0);
+--
+SELECT * FROM accounts; --1300 Alice
+
+--:№1
+BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+COMMIT;
+
+--:№2--
+BEGIN;
+UPDATE accounts SET balance = balance - 100.00
+    WHERE name = 'Alice';
+SAVEPOINT my_savepoint; -- Точка сохранения
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Bob';
+-- ошибочное действие... забыть его и использовать счёт Уолли
+ROLLBACK TO my_savepoint;
+UPDATE accounts SET balance = balance + 100.00
+    WHERE name = 'Wally';
+COMMIT;
+-------------------------------------------------
+Rollback;
+
+
+
+
+
+
+
+
+
+
+

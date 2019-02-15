@@ -1,0 +1,176 @@
+--: https://edu.postgrespro.ru/dev1/dev1_12_plpgsql_queries.pdf
+--: https://postgrespro.ru/docs/postgrespro/9.6/plpgsql-control-structures.html#plpgsql-statements-returning
+-- Diagnostic of command: GET DIAGNOSTICS, FOUND variable.
+--: Table functions: (RETURNS OF): RETURN QUERY querya
+DROP TABLE t;
+
+CREATE TABLE t(id integer, code text);
+INSERT INTO t VALUES (1, 'Раз'), (2, 'Два');
+SELECT * FROM t;
+
+--:It's ok
+DO $$
+DECLARE
+    r record;
+BEGIN
+    SELECT id, code INTO r FROM t WHERE id = 1;
+    RAISE NOTICE '%', r;
+END;
+$$;
+
+
+--But this doesn't work because the id may mean both the column name and name of variable:
+DO $$
+DECLARE
+    id   integer := 1;
+    code text;
+BEGIN
+    SELECT id, code INTO id, code FROM t WHERE id = id;
+    RAISE NOTICE '%, %', id, code;
+END;
+$$;
+
+/*
+* Для параметров p_ (parameter);
+
+* Для обычных переменных l_ (local) или v_ (variable);
+
+* Для констант c_ (constant);
+*/
+
+--: SO it's ok:
+DO $$
+DECLARE
+    l_id   integer := 1;
+    l_code text;
+BEGIN
+    SELECT id, code INTO l_id, l_code FROM t WHERE id = l_id;
+    RAISE NOTICE '%, %', l_id, l_code;
+END;
+$$;
+
+--: Return only one row:
+DO $$
+DECLARE
+    r record;
+BEGIN
+    SELECT id, code INTO r FROM t;
+    RAISE NOTICE '%', r;
+END;
+$$;
+
+--:To be sure that query return only one row: USE STRICT.
+DO $$
+DECLARE
+    r record;
+BEGIN
+    SELECT id, code INTO STRICT r FROM t;
+    RAISE NOTICE '%', r;
+END;
+$$;
+
+--:And another options - check the status of the last SQL command executed.
+DO $$
+DECLARE
+    r record;
+    rowcount integer;
+BEGIN
+    SELECT id, code INTO r FROM t WHERE false;
+
+    GET DIAGNOSTICS rowcount = ROW_COUNT;
+    RAISE NOTICE 'rowcount = %', rowcount;
+    RAISE NOTICE 'found = %', FOUND;
+END;
+$$;
+
+
+--:And also we can use PERFORM when result is unimportant:
+CREATE FUNCTION do_something() RETURNS void AS $$
+BEGIN
+    RAISE NOTICE 'Что-то сделалось.';
+END;
+$$ LANGUAGE plpgsql;
+
+DO $$
+BEGIN
+    PERFORM do_something();
+END;
+$$;
+----------------------------------------------------------------------------------------------
+--:INSERT, UPDATE, DELETE, CREATE, DROP....
+DO $$
+DECLARE
+    rowcount integer;
+BEGIN
+    CREATE TABLE test(n integer);
+
+    INSERT INTO test VALUES (1),(2),(3);
+    GET DIAGNOSTICS rowcount = ROW_COUNT;
+    RAISE NOTICE '%', rowcount;
+
+    UPDATE test SET n = n + 1 WHERE n > 1;
+    GET DIAGNOSTICS rowcount = ROW_COUNT;
+    RAISE NOTICE '%', rowcount;
+
+    DELETE FROM test WHERE n = 1;
+    GET DIAGNOSTICS rowcount = ROW_COUNT;
+    RAISE NOTICE '%', rowcount;
+
+    DROP TABLE test;
+END;
+$$;
+
+
+--:RETURNING INTO 
+DO 
+$$
+	DECLARE
+		r record;
+	BEGIN
+		UPDATE t SET code = code || '!' WHERE id = 1 RETURNING * INTO r;
+		RAISE NOTICE 'Изменили: %', r;
+		RAISE NOTICE 'found = %', FOUND;
+	END;
+$$;
+
+SELECT * FROM t;
+
+--------------------------------------------------------------------------------
+--:Table functions:
+CREATE FUNCTION t() RETURNS TABLE(LIKE t) AS $$
+BEGIN
+    RETURN QUERY SELECT id, code FROM t ORDER BY id;
+END;
+$$ STABLE LANGUAGE plpgsql;
+
+SELECT * FROM t();
+
+--: Return values line by line:  
+CREATE FUNCTION days_of_week() RETURNS SETOF text AS $$
+BEGIN
+    FOR i IN 7 .. 13 LOOP
+        RETURN NEXT to_char(to_date(i::text,'J'),'TMDy');
+    END LOOP;
+END;
+$$ STABLE LANGUAGE plpgsql;
+
+SELECT * FROM days_of_week() WITH ORDINALITY;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

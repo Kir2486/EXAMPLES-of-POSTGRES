@@ -1,0 +1,82 @@
+--:Windows functions --from:
+--:https://postgrespro.ru/docs/postgresql/11/tutorial-window
+SELECT * FROM empsalary
+ORDER BY EMPNO;
+
+--:
+SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname)
+  FROM empsalary;
+  
+--: ORDER BY CHANGE THE RESULT -- QUESTION!!! 
+SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname ORDER BY SALARY) --ORDER WORK WITH EACH OF STRING ( NO WITH WINDOW)
+  FROM empsalary;
+  
+--:USING RANK()
+SELECT depname, empno, salary,
+       rank() OVER (PARTITION BY depname ORDER BY salary DESC)
+	FROM empsalary;
+	
+--:MORE EXAMPLES
+SELECT depname, empno, salary,
+	SUM(SALARY) OVER (PARTITION BY DEPNAME)
+	FROM EMPSALARY;
+--:
+SELECT depname, empno, salary,
+	SUM(SALARY) OVER (PARTITION BY DEPNAME ORDER BY SALARY)
+	FROM EMPSALARY;
+--:
+SELECT depname, empno, salary,
+	SUM(SALARY) OVER () --IT TAKES ALL STRINGS
+	FROM EMPSALARY;
+--:
+SELECT salary, sum(salary) OVER (ORDER BY SALARY) FROM empsalary;
+
+
+--:USING SUBQUERY -- BECAUSE WINDOWS dosn't work in WHERE....
+
+SELECT depname, empno, salary
+FROM
+  (SELECT depname, empno, salary,
+    rank() OVER (PARTITION BY depname ORDER BY salary DESC, empno) AS pos
+   FROM empsalary
+  ) AS ss
+WHERE pos < 3;
+
+--: USING WINDOW 
+SELECT sum(salary) OVER w, avg(salary) OVER w
+  FROM empsalary
+  WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
+  
+/* https://postgrespro.ru/docs/postgresql/11/sql-expressions
+USING	UNBOUNDED PRECEDING
+			смещение PRECEDING
+			CURRENT ROW
+			смещение FOLLOWING
+			UNBOUNDED FOLLOWING 
+*/
+  
+
+
+
+
+
+
+
+
+
+
+
+	
+  
+
+  
+  
+  
+ 
+
+
+
+
+
+
+

@@ -1,0 +1,97 @@
+--PGPLSQL--BEGINING!!!
+--Declaration of composite types:
+CREATE TYPE complex AS (
+    r       double precision,
+    i       double precision
+);
+CREATE TYPE inventory_item AS (
+    name            text,
+    supplier_id     integer,
+    price           numeric
+);
+
+--AFTER Things are above. We can use their to CREATE TABLE
+CREATE TABLE on_hand (
+    item      inventory_item,
+    count     integer
+);
+
+INSERT INTO on_hand VALUES (ROW('fuzzy dice', 42, 1.99), 1000);
+INSERT INTO on_hand VALUES (ROW('Test', 42, 30), 1000);
+SELECT * FROM on_hand;
+
+---:Or to create function
+CREATE FUNCTION price_extension(inventory_item, integer) RETURNS numeric
+AS 'SELECT $1.price * $2' LANGUAGE SQL;
+
+SELECT price_extension(item, 10) FROM on_hand;
+-----------------------------------------------------------------------
+--: How to write it in composite type above: 
+'("fuzzy dice",42,1.99)'
+'("fuzzy dice",42,)'
+'("",42,)'
+-----------------------------------------------------------------------
+
+--Appeal to compound types: we use '.' (DOT) to use column in composite type. BUT WHAT IS BELOW WANT WORK
+SELECT item.name FROM on_hand WHERE item.price > 9.99;
+--BECAUSE WE SHOULD USE ().
+SELECT (item).name FROM on_hand WHERE (item).price > 9.99;
+--Or allso possible:
+SELECT (on_hand.item).name FROM on_hand WHERE (on_hand.item).price > 9.99;
+
+--INSERT
+INSERT INTO on_hand (item) VALUES(('Test_insert',12,12));
+SELECT * FROM on_hand;
+UPDATE on_hand SET item = ROW('Test_insert_UPDATE',121,112);
+
+--Update seperate field
+UPDATE on_hand SET item.name = (item).name || '+TEST_CHAR!!!'
+WHERE (item).price > 100;
+
+--INSERT INTO FIELD OF TYPE:
+INSERT INTO on_hand (item.price) VALUES(1000);
+
+--------------------------------------------------------------------------------------
+--------------------------------------------------------------------------------------
+--Using composite types in queries;
+--:
+SELECT c FROM on_hand c;
+
+SELECT c.* FROM on_hand c;
+
+SELECT (item).* FROM on_hand;
+
+SELECT (c.item).name FROM on_hand c WHERE (c.item).price > 100; -- OR
+SELECT name(c.item) FROM on_hand c WHERE price(c.item) > 100;
+
+----------------------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
+--:SQL FUNCTION: https://edu.postgrespro.ru/dev1/dev1_09_sql_func.pdf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

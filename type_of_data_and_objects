@@ -1,0 +1,120 @@
+--Types of data and objects;
+--: It's based on https://postgrespro.ru/docs/postgresql/9.6/sql
+--: https://habr.com/ru/company/postgrespro/blog/351008/
+
+
+
+--Use filter in aggregation function:
+SELECT
+    count(*) AS unfiltered,
+    count(*) FILTER (WHERE i < 5) AS filtered
+FROM generate_series(1,10) AS s(i);
+
+--:Window functions: https://postgrespro.ru/docs/postgrespro/9.5/tutorial-window
+--: https://postgrespro.ru/docs/postgrespro/9.5/sql-expressions#syntax-window-functions
+--https://habr.com/ru/post/268983/
+
+--:#1
+SELECT s as Main_column,row_number() OVER()
+	FROM generate_series(1,10) AS s(i);
+	
+--:#2
+SELECT s as Main_column,
+	   s%2 as tip,
+	   row_number() OVER(partition by s%2) AS q
+	FROM generate_series(1,10) AS s(i);
+
+
+--:About differences aggregation functions between simple windows f:
+--: Good example:
+CREATE TABLE balance_change(transaction_id int NOT NULL PRIMARY KEY,
+						    change numeric);
+DROP TABLE balance_change;
+
+INSERT INTO balance_change(transaction_id,change) 
+VALUES 
+	(2,-2.00),
+	(1,1.00),
+	(3,10.00),
+	(4,-4.00),
+	(5,5.50);
+SELECT * FROM balance_change;
+
+--:USE ORDER BY
+SELECT
+    transaction_id,
+    change,
+    sum(change) OVER (ORDER BY transaction_id) as balance
+FROM balance_change 
+ORDER BY transaction_id;
+
+--BUT WITHOUT WIll be just:
+SELECT
+    transaction_id,
+    change,
+    sum(change) OVER () as result_balance
+FROM balance_change
+ORDER BY transaction_id;
+
+--Using the 'WINDOW' 
+SELECT s as Main_column,
+	   s%2 as tip,
+	   row_number() OVER w AS q,
+	   sum(s) OVER w
+	FROM generate_series(1,10) AS s(i)
+WINDOW w AS (partition by s%2);
+
+--We need to use subquery to filter the result of window functions:
+SELECT * 
+FROM (
+		SELECT s as Main_column,
+			   s%2 as tip,
+			   row_number() OVER w AS q,
+			   sum(s) OVER w
+			FROM generate_series(1,10) AS s(i)
+		WINDOW w AS (partition by s%2)
+	  ) table_row
+ WHERE q > 2;
+
+
+--USING Lag() which find the row before the last rows in frame: 
+
+SELECT s as Main_column,
+	   s%2 as tip,
+	   row_number() OVER w AS q,
+	   lag(s) OVER w
+	FROM generate_series(1,10) AS s(i)
+WINDOW w AS (partition by s%2 order by s desc )
+order by tip,q;
+
+
+--Using declaration the window size:
+SELECT s as Main_column,
+	   s%2 as tip,
+	   row_number() OVER w AS q,
+	   lag(s) OVER w,
+	   SUM(s) OVER(ROWS BETWEEN 1 PRECEDING AND 1 FOLLOWING )
+	   -- Or : (ROWS BETWEEN 1 PRECEDING AND CURRENT ROW)
+	FROM generate_series(1,10) AS s(i)
+WINDOW w AS (partition by s%2 order by s desc )
+order by tip,q;
+
+
+
+
+	
+
+ 
+ 
+	
+	
+
+
+
+
+
+	
+	
+
+
+

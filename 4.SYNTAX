@@ -1,0 +1,56 @@
+--SYNTAX SQL 
+SELECT 'foo'
+'bar';
+
+SELECT 'foo'      'bar';--ERROR
+
+SELECT E'\tPRIVET\t KAK T\'VOI DELA';
+
+SELECT E'\0';--ERROR  неверная последовательность байт для кодировки "UTF8": 0x00
+
+SELECT $MAIN$   жа$$123$$'нна да''рк   $MAIN$;--OK'
+
+--:USING BIT STRING
+SELECT B'1010101'
+---
+
+--:Function just use () but there are two variants - "table.col" and "table(col)""
+SELECT sqrt(2);
+
+--:count игнорирует NULL соотвественно не считает нулевые значения.
+
+/*Если добавлено предложение FILTER, агрегатной функции подаются только те 
+  входные строки, для которых условие_фильтра вычисляется как истинное; другие строки отбрасываются. Например:*/
+SELECT count(*) AS unfiltered,
+       count(*) FILTER (WHERE i < 5) AS filtered
+	FROM generate_series(1,10) AS s(i);
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

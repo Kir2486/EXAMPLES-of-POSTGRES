@@ -1,0 +1,65 @@
+--: Предполагаем что таблица customer очень большая
+CREATE 
+INSERT INTO "PR1".customer 
+(SELECT id+10, 
+ 		name, 
+ 		description,
+ 		active, 
+		address_id, 
+        phone,
+        create_date, 
+        "INN", 
+        last_update_date, 
+        default_shipment_address_id
+    FROM "PR1".customer where 1=1
+);
+
+
+delete from "PR1".customer t where 1=1 AND
+(not exists (select 1 from "PR1".cust_addresses a where a.customer_id = t.id ));
+			 
+delete from "PR1".customer t where (not exists (select 1 from "PR1".cust_addresses a where a.customer_id = t.id )) 
+			 
+			 
+							 
+							 
+--: Pattern Search
+							 
+							 
+							 
+							 
+							 
+							 
+with symbols(str1, str2)
+as (select 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'COLUMN2123456789' )
+select string_agg(substr(str1, (random() * length(str1) + 1) :: INTEGER, 1), ''), -- Choose one random symbols from str1 
+       string_agg(substr(str2, (random() * length(str2) + 1) :: INTEGER, 1), '') -- Choose one random symbols from str2 
+from symbols 
+	  cross join 
+				(select 1 as dig
+				 union all select 2 union all select 3
+				 union all select 4) t2;
+												
+												
+with symbols(str1, str2)
+as (select 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'COLUMN2123456789' )												
+SELECT * FROM symbols 
+	  cross join 
+				(select 1 as dig
+				 union all select 2 union all select 3
+				 union all select 4) t2;
+												
+select string_agg(substr('abcd', (random() * length('abcd') + 1) :: INTEGER, 1), '') from 
+
+							 
+							 
+
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 

@@ -1,0 +1,91 @@
+--ETL:
+
+CREATE TEMP TABLE ETL_1 (
+	  employee_id serial primary key,
+	  first_name varchar,
+	  last_name varchar ,
+	  phone_number varchar,
+	  hire_date date,
+	  department_id integer
+);
+
+--: DROP FUNCTION generate_string(integer);
+
+CREATE OR REPLACE FUNCTION generate_string(word_length integer) RETURNS text
+AS 
+$$
+DECLARE
+declare word text;
+BEGIN
+	  with symbols(characters)
+      as (VALUES ('abcdefghjkmnpqrstuvwxyz'))
+	  select string_agg(substr(characters, (random() * length(characters) + 1) :: INTEGER, 1), '') into word
+	  	from symbols
+	  join generate_series(1, word_length) as word(chr_idx) on 1 = 1;
+	  return word;
+END;
+$$
+language plpgsql;	
+	
+--: Generate date
+create or replace function generate_date(start_date date)
+returns date as $$
+  declare hire_date date;
+begin
+  select start_date + (random() * (current_date - start_date))::int into hire_date;
+  return hire_date;
+end;$$
+language plpgsql;
+--: SELECT generate_date('2200-10-15');
+								   
+---: Phone number
+DROP FUNCTION generate_phone();
+								   
+CREATE or replace function generate_phone()
+returns text as $$
+  declare word text;
+begin
+  select format('(%s%s%s) %s%s%s-%s%s%s%s',
+          arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8], arr[9], arr[10])::text into word
+  from (
+     select array(
+      SELECT (random() * 9)::int
+      FROM   generate_series(1, 10)
+      ) as arr
+    ) as cte;
+  return word;
+end;$$
+language plpgsql;
+				  
+--: SELECT generate_phone();			  				  
+--: DROP TABLE 	ETL_1;
+--: DROP FUNCTION fill(integer);	
+	
+																					  
+CREATE OR REPLACE FUNCTION fill(count_of_rows integer) RETURNS void  AS $$
+TRUNCATE ETL_1;
+INSERT INTO ETL_1(first_name,last_name,phone_number,hire_date)
+    SELECT generate_string(8),generate_string(8),generate_phone(),generate_date('1970-01-01')
+					  FROM generate_series(1,count_of_rows);																				  
+SELECT count(*) FROM ETL_1;
+$$ LANGUAGE SQL;	
+
+SELECT fill(1000000);
+
+																					 																						-----------------------------------------------------------------------------------------------	
+--: COPY TO .CSV:
+SELECT * FROM ETL_1;
+																					  
+COPY (SELECT * FROM ETL_1)  TO 'C:/POSTGRESQL/test.csv' CSV;
+DROP TABLE ETL_1;
+																					  
+																					  
+INSERT INTO "PR1".customer (SELECT id+10, name, description, active, address_id, phone, create_date, "INN", last_update_date, default_shipment_address_id
+                FROM "PR1".customer where 1=1);																					  
+					
+
+				  
+
+
+
+

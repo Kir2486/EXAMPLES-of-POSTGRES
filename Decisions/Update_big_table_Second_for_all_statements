@@ -1,0 +1,96 @@
+/*: #3 :
+Cоздать функцию которая выполняет динамический sql по частям – т.е.  
+не весь запрос целиком а партиями записей,  разобраться с циклами в pgplsql. */
+
+--Create Tables for test:
+CREATE TABLE Big_table AS
+SELECT i num,md5(random()::text) txt FROM generate_series(1,1000) i;
+--: DROP TABLE Big_table;
+
+CREATE TABLE test_in AS
+SELECT i num,md5(random()::text) txt FROM generate_series(1,10) i;
+--: DROP TABLE test_in;
+
+CREATE TABLE cust_addresses AS
+SELECT i customer_id,md5(random()::text) txt FROM generate_series(1,10) i;
+		select * from cust_addresses;
+--: DROP TABLE cust_addresses;
+
+
+
+--: DROP FUNCTION get_qty1(text,text, int, regclass);
+
+--: Function which does a query step by step: (--: COMMENT: In order to use this function you have to use 'where 1=1' construction in your code)
+CREATE OR REPLACE FUNCTION get_qty2 (tab text,col1 text, step int, m_table regclass ) RETURNS void
+AS 
+$$
+DECLARE
+ 	 new_statement text := 'WHERE ' ||get_qty2.col1|| '> $1 AND '||get_qty2.col1||' <= $1 + $2 ';
+ 	 new_text text := replace(tab,'where 1=1',new_statement); --replace where 1=1 on out statement
+ 	 l_dip_1 int := 0; --: Variable for constraint select
+ 	 rowcount integer := 1; --: count of processed rows in step
+ 	 counter_1 integer := 0; --: Variable that shows how many rows have already been processed in all the time 
+ 	 count_ex int =0; --: Amount of rows main table (for EXIT from loop)
+BEGIN   
+	  EXECUTE format('SELECT (SELECT COUNT (*) FROM %s)::int', m_table) into count_ex;	 
+      RAISE NOTICE 'AMOUNT ROWS IN MAIN TABLE: %', count_ex::text;
+		  <<MAIN_LOOP>>
+			LOOP
+				EXIT WHEN rowcount = 0 and l_dip_1 > count_ex;
+				EXECUTE new_text USING l_dip_1,get_qty2.step;
+				GET DIAGNOSTICS rowcount = ROW_COUNT;
+				RAISE NOTICE '%', rowcount;
+				counter_1:=counter_1+rowcount;
+				RAISE NOTICE 'Уже обработано:%',counter_1;
+				l_dip_1 := l_dip_1 + get_qty2.step;
+			END LOOP;	
+END;
+$$ LANGUAGE plpgsql;
+
+			
+			
+--: Test #1:  DELETE
+SELECT get_qty2('delete from Big_table t where 1=1 AND
+                 (not exists (select 1 from cust_addresses a where a.customer_id = t.NUM ))','num',10,'Big_table');						  
+SELECT * FROM cust_addresses;
+SELECT * FROM Big_table;
+
+--: Test #2:  INSERT 
+SELECT get_qty2('INSERT INTO Big_table (SELECT id+10, name, description, active, address_id, phone, create_date, "INN", last_update_date, default_shipment_address_id
+                 FROM test_in where 1=1)','num',10,'Big_table');	
+SELECT * FROM Big_table;
+
+
+
+
+
+
+
+
+
+		 
+----------------------------------------------------------------------------------------------
+---: Function which takes name of table how in parameter (REGCLASS  %s)
+DROP FUNCTION test_dynamic	(regclass)
+			 
+CREATE OR REPLACE FUNCTION test_dynamic(m_table regclass) RETURNS void
+AS 
+$$
+DECLARE 
+count_1 integer;			 
+BEGIN
+EXECUTE format('SELECT (SELECT COUNT (*) FROM %s)::int', m_table) into count_1;
+RAISE NOTICE 'ОБРАБОТАНО :%', count_1;
+END;
+$$ LANGUAGE plpgsql;
+		
+SELECT test_dynamic('Big_table');
+
+
+
+
+
+
+
+
+

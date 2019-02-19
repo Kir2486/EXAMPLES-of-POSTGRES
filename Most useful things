@@ -75,6 +75,8 @@ SELECT oid::regclass, pg_sleep(0.1) from pg_class;/*В этом же случа�
 				
 				
 				
+				
+				
 									   
 
 									   

@@ -1,0 +1,51 @@
+--: Предполагаем что таблица customer очень большая
+						 
+with symbols(str1, str2)
+as (select 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'COLUMN2123456789' )
+select string_agg(substr(str1, (random() * length(str1) + 1) :: INTEGER, 1), ''), -- Choose one random symbols from str1 
+       string_agg(substr(str2, (random() * length(str2) + 1) :: INTEGER, 1), '') -- Choose one random symbols from str2 
+from symbols 
+	  cross join 
+				(select 1 as dig
+				 union all select 2 union all select 3
+				 union all select 4) t2;
+--: 
+with symbols(characters)
+as (VALUES ('ABCDEFGHIJKLMNOPQRSTUVWXYZ'))
+select string_agg(substr(characters, (random() * length(characters) + 1) :: INTEGER, 1), '')
+	from symbols
+		join generate_series(1,8) as word(columnNameForThisTable) on 1 = 1 -- word length
+		join generate_series(1,10) as words(otherColumnName) on 1 = 1 -- # of words
+group by columnNameForThisTable;
+			
+--:
+with symbols(str1, str2)
+as (select 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'COLUMN2123456789' )
+select string_agg(substr(str1, (random() * length(str1) + 1) :: INTEGER, 1), ''),
+       string_agg(substr(str2, (random() * length(str2) + 1) :: INTEGER, 1), '')
+	from symbols cross join (select 1 as dig
+                             union all select 2 
+							 union all select 3
+							 ) as t2(whatIneedHereAsDescription)
+			
+---:
+select alias.col1 from (select 1 as col1 
+						union all 
+						select 2) as alias
+			
+---:
+select alias.column_for_My_table from (select 1 as col1 
+									   union all 
+									   select 2) as alias(column_for_My_table)
+							 
+							 
+
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 
+							 

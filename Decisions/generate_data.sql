@@ -101,7 +101,7 @@ returns varchar as $$
   declare word varchar;
 begin
   select format('(%s%s%s) %s%s%s-%s%s%s%s',
-          arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8], arr[9], arr[10])::varchar into word
+          arr[1], arr[2], arr[3], arr[4], arr[5], arr[6], arr[7], arr[8], arr[9], arr[10])::varchar-- into word
   from (
      select array(
       SELECT (random() * 9)::int

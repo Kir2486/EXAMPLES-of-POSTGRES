@@ -37,6 +37,9 @@ select alias.col1 from (select 1 as col1
 select alias.column_for_My_table from (select 1 as col1 
 									   union all 
 									   select 2) as alias(column_for_My_table)
+			
+
+
 							 
 							 
 

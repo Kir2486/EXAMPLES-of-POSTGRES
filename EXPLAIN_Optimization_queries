@@ -1,5 +1,6 @@
 --:Optimization the queries: https://habr.com/ru/post/203320/
 --And also original statement is: https://www.dalibo.org/_media/understanding_explain.pdf
+DROP TABLE foo;
 
 CREATE TABLE foo (c1 integer, c2 text);
 INSERT INTO foo
@@ -7,7 +8,8 @@ INSERT INTO foo
   FROM generate_series(1, 1000000) AS i;
   
 EXPLAIN SELECT * FROM foo; --Use Seq Scan (Последовательное чтение таблицы, блок за блоком)
---
+
+--Add 10 rows:
 INSERT INTO foo
   SELECT i, md5(random()::text)
   FROM generate_series(1, 10) AS i;
@@ -19,6 +21,12 @@ EXPLAIN SELECT * FROM foo;
 
 --:
 EXPLAIN (ANALYZE) SELECT * FROM foo;
+
+
+
+EXPLAIN (ANALYZE) INSERT INTO foo VALUES(5);
+ROLLBACK;
+SELECT COUNT(*) FROM foo;
 
 
 

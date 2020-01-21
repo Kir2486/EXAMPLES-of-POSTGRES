@@ -1,0 +1,10 @@
+select * from pg_tables
+where tablename = 'talend_1' or
+	  tablename = 'talend_2';
+	  
+SELECT * FROM talend_1;
+SELECT * FROM 
+
+
+
+

@@ -1,0 +1,26 @@
+select "REGION", "SUBREGION", sum("PAYMENT") revenue
+from updated_orders
+where "REGION" is not null and "SUBREGION" is not null
+group by rollup ("REGION", "SUBREGION")
+
+
+
+select * from pg_stat_kcache ;
+
+
+SELECT *
+  FROM pg_stat_activity order by query_start;
+ s
+WHERE datname ='Test_lama'
+-- : where s.xact_start IS NOT NULL   n -- for no have done queries
+
+
+--kill process: pid = 16064
+select pg_cancel_backend(16064)
+
+analyze;
+
+SELECT * FROM pg_tables;
+
+
+logging_collector = on

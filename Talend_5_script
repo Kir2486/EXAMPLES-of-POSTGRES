@@ -1,0 +1,132 @@
+--Lab_5 EXIT TASK
+SELECT * FROM "src_products";
+DROP TABLE "src_products";
+
+SELECT * FROM "src_customers";
+DROP TABLE "src_customers";
+
+DROP TABLE "SRC_CREDIT_CARDS";
+DROP TABLE "files";
+DROP TABLE "src_payments";
+
+
+
+-------------------------------------------------------------------------------------
+CREATE TABLE IF NOT EXISTS DIM_CUSTOMERS (
+	CUST_ID INTEGER PRIMARY KEY,
+	NAME VARCHAR(150),
+	Username VARCHAR(150),
+	Email VARCHAR(150),
+	DateOfBirth DATE,
+	StreetAddress VARCHAR(150),
+	City VARCHAR(150),
+	Country VARCHAR(150),
+	Zip VARCHAR(150),
+	State VARCHAR(150),
+	Phone VARCHAR(150)
+	);
+DROP TABLE DIM_CUSTOMERS;
+
+
+
+CREATE TABLE IF NOT EXISTS DIM_PRODUCTS (
+	Products integer PRIMARY KEY,
+	ProductName VARCHAR(150),
+	CompanyName VARCHAR(150),
+	Price VARCHAR(150),
+	WarehouseLocationState VARCHAR(50)
+	);
+DROP TABLE DIM_PRODUCTS;
+
+
+
+CREATE TABLE IF NOT EXISTS DIM_CREDIT_CARDS (
+	CreditCard VARCHAR(150),
+	CreditCardNumber VARCHAR(150),
+	PRIMARY KEY (CreditCard,CreditCardNumber)
+	);
+	
+CREATE TABLE IF NOT EXISTS FCT_PURCHASE (
+	PaymentID integer,
+	CustomerId integer,
+	ProductId integer,
+	TransactionDate DATE,
+	CreditCard VARCHAR (150),
+	CreditCardNumber VARCHAR (150),
+	isInterState integer,
+	Constraint check_state check (isInterState in (0,1))
+	)
+DROP TABLE FCT_PURCHASE;
+								  
+SELECT * FROM DIM_PRODUCTS;
+--------------------
+								  
+DROP TABLE DIM_PRODUCTS;
+DROP TABLE DIM_CUSTOMERS; 
+DROP TABLE FCT_PURCHASE;
+DROP TABLE FILES;								  
+SELECT 	* FROM "FCT_PURCHASE";
+DROP TABLE "FCT_PURCHASE";
+DROP TABLE "src_customers"
+DROP TABLE "src_products";
+-------------------------------------------------------------------------------------
+								  
+SELECT * 
+	FROM files
+WHERE
+								  
+								  
+SELECT * FROM "src_payments";
+		DROP TABLE "src_payments";
+SELECT * FROM "src_products";
+		DROP TABLE "src_products"
+SELECT * FROM "src_customers";
+	  DROP TABLE "src_customers";
+SELECT * FROM FILES;
+SELECT * FROM "SRC_CREDIT_CARDS";
+SELECT * FROM "FCT_PURCHASE"								  
+								  
+							
+
+							SELECT src."ID",					
+								   src."Name",
+								  src."Username",
+								  src."Email",
+								  src."DateOfBirth",
+								  src."StreetAddress",
+								  src."City",
+								  src."Country",
+								  src."Zip",
+								  src."State",
+								  src."Phone"
+	FROM src_customers src 
+		 LEFT JOIN "DIM_CUSTOMERS" dim on src."ID" = dim.CUST_ID
+WHERE dim.CUST_ID IS NULL;
+								  
+								  
+								  
+								  select src_payments.\"PaymentID\", src_payments.\"CustomerId\", src_payments.\"ProductId\", src_payments.\"CreditCard\", 
+src_payments.\"CreditCardNumber\", src_payments.\"TransactionDate\" from src_payments
+								  
+								  
+
+SELECT p."Products",
+	   p."ProductName",
+	   p."CompanyName",
+	   p."Price",
+	   p."WarehouseLocationState"
+	FROM src_products p
+		 LEFT JOIN "DIM_PRODUCTS" dim on p."Products" = dim.Products
+	WHERE dim.Products IS NULL;
+
+SELECT * FROM "DIM_CUSTOMERS";
+SELECT * FROM DIM_CUSTOMERS;								  
+SELECT * FROM "DIM_PRODUCTS";								  
+DROP TABLE "DIM_PRODUCTS";
+								  DROP TABLE "DIM_CUSTOMERS";
+SELECT * FROM DIM_PRODUCTS;
+								  DROP TABLE DIM_PRODUCTS;
+
+SELECT filename FROM files;
+								  
+								  

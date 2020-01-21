@@ -1,0 +1,15 @@
+CREATE EXTENSION pg_stat_statements;
+
+SELECT * FROM pg_stat_statements
+WHERE dbid = 17779;
+
+select pg_stat_statements_reset();  -- clear statisctic;
+
+SELECT * FROM pg_database;
+
+
+select oid, * from pg_database --17779 
+
+
+
+

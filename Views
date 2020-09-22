@@ -20,7 +20,7 @@ UPDATE comedies SET classification = '18+' WHERE name = 'Kop';
 UPDATE comedies SET classification = '6+' WHERE name = 'WAR';
 UPDATE comedies SET classification = '18+' WHERE name = 'Kop123';
 UPDATE comedies SET classification = '6+' WHERE name = 'Domino111';
-MASTER CHANGES
+
 --CREATE VIEW
 CREATE VIEW Best_comedies AS
     SELECT *

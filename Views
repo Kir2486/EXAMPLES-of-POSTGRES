@@ -28,6 +28,7 @@ CREATE VIEW Best_comedies AS
     WHERE kind = 'Comedy';
 	
 DROP VIEW Best_comedies;
+---MASTER_CHANGE
 
 SELECT * FROM Best_comedies;
 --
